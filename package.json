@@ -1,7 +1,7 @@
 {
-  "name": "angular2-mentions",
-  "version": "0.5.1",
-  "description": "Angular 2 mentions for text fields.",
+  "name": "angular2-mentions-plus",
+  "version": "0.5.2",
+  "description": "Angular 2 mentions for text fields",
   "keywords": [
     "angular",
     "mention",
@@ -10,9 +10,9 @@
   "main": "src/mention/index.ts",
   "repository": {
     "type": "git",
-    "url": "https://github.com/dmacfarlane/angular2-mentions.git"
+    "url": "https://github.com/phattranky/angular2-mentions.git"
   },
-  "author": "Dan MacFarlane",
+  "author": "Dan MacFarlane, Phat Tran",
   "license": "MIT",
   "angular-cli": {},
   "scripts": {

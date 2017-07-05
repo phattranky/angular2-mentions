@@ -29,25 +29,46 @@ const KEY_2 = 50;
   }
 })
 export class MentionDirective {
-  items: string[];
+  triggerChars: string[] = ['@'];
+  items: any[];
   startPos: number;
   startNode;
   searchList: MentionListComponent;
   stopSearch: boolean;
   iframe: any; // optional
+  triggedCharIndex: number = 0;
   constructor(
     private _element: ElementRef,
     private _componentResolver: ComponentFactoryResolver,
     private _viewContainerRef: ViewContainerRef
   ) {}
 
-  @Input() triggerChar: string = "@";
+  @Input() labelSelect: string;
 
-  @Input() set mention(items:string []){
-    this.items = items.sort();
+  @Input() set triggerChar(triggerChar: string) {
+    this.triggerChars = triggerChar.split(",");
   }
 
-  @Input() mentionSelect: (selection: string) => (string) = (selection: string) => selection;
+  @Input() set mention(items: any[]){
+    if (!Array.isArray(items[0])) {
+      this.items = items.sort();
+    } else {
+      this.items = items;
+    }
+  }
+
+  @Input() mentionSelect: (data: {
+    triggerChar: string,
+    activeItem: any
+  }) => (string) = (data: {
+    triggerChar: string,
+    activeItem: any
+  }) => (data.triggerChar + data.activeItem)
+
+  @Input() mentionFilter: (triggerChar: string, triggerCharIndex: number, items: any[], searchString: string) => (any) = 
+    (triggerChar: string, triggerCharIndex: number, items: any[], searchString: string) => {
+      return items.filter(e => e.toLowerCase().startsWith(searchString));
+    }
 
   setIframe(iframe: HTMLIFrameElement) {
     this.iframe = iframe;
@@ -80,7 +101,8 @@ export class MentionDirective {
         charPressed = String.fromCharCode(charCode + 32);
       }
       else if (event.shiftKey && charCode === KEY_2) {
-        charPressed = this.triggerChar;
+        // charPressed = this.triggerChar;
+        charPressed = this.triggerChars[0];
       }
       else {
         // TODO (dmacfarlane) fix this for non-alpha keys
@@ -94,7 +116,9 @@ export class MentionDirective {
       setCaretPosition(this.startNode, pos, this.iframe);
     }
     //console.log("keyHandler", this.startPos, pos, val, charPressed, event);
-    if (charPressed == this.triggerChar) {
+    const indexOfTriggeredChar = this.triggerChars.indexOf(charPressed);
+    if (indexOfTriggeredChar >= 0) {
+      this.triggedCharIndex = indexOfTriggeredChar;
       this.startPos = pos;
       this.startNode = (this.iframe ? this.iframe.contentWindow.getSelection() : window.getSelection()).anchorNode;
       this.stopSearch = false;
@@ -122,7 +146,9 @@ export class MentionDirective {
             // value is inserted without a trailing space for consistency
             // between element types (div and iframe do not preserve the space)
             insertValue(nativeElement, this.startPos, pos,
-              this.mentionSelect(this.triggerChar + this.searchList.activeItem), this.iframe);
+              this.mentionSelect({
+                triggerChar: this.triggerChars[this.triggedCharIndex],
+                activeItem: this.searchList.activeItem}), this.iframe);
             // fire input event so angular bindings are updated
             if ("createEvent" in document) {
               var evt = document.createEvent("HTMLEvents");
@@ -161,7 +187,8 @@ export class MentionDirective {
             mention += charPressed;
           }
           let searchString = mention.toLowerCase();
-          let matches = this.items.filter(e => e.toLowerCase().startsWith(searchString));
+          let matches = this.mentionFilter(this.triggerChar, this.triggedCharIndex, this.items, searchString);
+
           this.searchList.items = matches;
           this.searchList.hidden = matches.length == 0 || pos <= this.startPos;
         }
@@ -174,8 +201,9 @@ export class MentionDirective {
       let componentFactory = this._componentResolver.resolveComponentFactory(MentionListComponent);
       let componentRef = this._viewContainerRef.createComponent(componentFactory);
       this.searchList = componentRef.instance;
-      this.searchList.items = this.items;
-      this.searchList.hidden = this.items.length==0;
+      this.searchList.labelSelect = this.labelSelect;
+      this.searchList.items = this.triggerChars.length > 1 ? this.items[this.triggedCharIndex] : this.items;
+      this.searchList.hidden = (this.triggerChars.length > 1 ? this.items[this.triggedCharIndex] : this.items).length==0;
       this.searchList.position(nativeElement, this.iframe);
       componentRef.instance['itemClick'].subscribe(() => {
         nativeElement.focus();
@@ -185,8 +213,8 @@ export class MentionDirective {
     }
     else {
       this.searchList.activeIndex = 0;
-      this.searchList.items = this.items;
-      this.searchList.hidden = this.items.length==0;
+      this.searchList.items = this.triggerChars.length > 1 ? this.items[this.triggedCharIndex] : this.items;
+      this.searchList.hidden = (this.triggerChars.length > 1 ? this.items[this.triggedCharIndex] : this.items).length==0;
       this.searchList.position(nativeElement, this.iframe);
       window.setTimeout(() => this.searchList.resetScroll());
     }

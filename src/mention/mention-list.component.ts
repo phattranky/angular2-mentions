@@ -26,7 +26,7 @@ import { getCaretCoordinates } from './caret-coords';
   template: `
     <ul class="dropdown-menu scrollable-menu" #list [hidden]="hidden">
         <li *ngFor="let item of items; let i = index" [class.active]="activeIndex==i">
-            <a class="text-primary" (mousedown)="activeIndex=i;itemClick.emit();$event.preventDefault()">{{item}}</a>
+            <a class="text-primary" (mousedown)="activeIndex=i;itemClick.emit();$event.preventDefault()">{{itemLabel(item)}}</a>
         </li>
     </ul>
     `
@@ -35,9 +35,17 @@ export class MentionListComponent {
   items = [];
   activeIndex: number = 0;
   hidden: boolean = false;
+  labelSelect: string = "";
   @ViewChild('list') list : ElementRef;
   @Output() itemClick = new EventEmitter();
   constructor(private _element: ElementRef) {}
+
+  itemLabel(item) {
+    if (this.labelSelect && this.labelSelect.length) {
+      return item[this.labelSelect];
+    }
+    return item;
+  }
 
   // lots of confusion here between relative coordinates and containers
   position(nativeParentElement: HTMLInputElement, iframe: HTMLIFrameElement = null) {

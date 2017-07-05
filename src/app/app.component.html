@@ -7,6 +7,9 @@ and content editable fields. Try entering some @names below.</p>
 <h3>Minimal</h3>
 <input [mention]="items" class="form-control" type="text">
 
+<h3>Minimal with multiple item source - Can use both @ and $</h3>
+<input [mention]="multiItems" triggerChar="@,$" class="form-control" type="text" [mentionFilter]="mentionFilter">
+
 <h3>Textarea</h3>
 <textarea [mention]="items" class="form-control" cols="60" rows="4"></textarea>
 
